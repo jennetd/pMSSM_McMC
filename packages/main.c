@@ -26,7 +26,7 @@
 //#define MASSES_INFO      
       /* Display information about SUSY and Higgs masses 
       */
-#define CONSTRAINTS     
+//#define CONSTRAINTS     
       /* Display  deltarho, B_>sgamma, Bs->mumu, gmuon and
          check LEP mass limits 
       */ 
@@ -43,13 +43,13 @@
          individual channels 
       */      
       
-#define INDIRECT_DETECTION  
+//#define INDIRECT_DETECTION  
       /* Compute spectra of gamma/positron/neutrinos
          for DM annihilation; calculate <sigma*v> and
          integrate gamma signal over DM galactic squared
          density for given line of sight.  
       */
-#define LoopGAMMA
+//#define LoopGAMMA
       /* Calculate discrete  photon spectrum caused by annihilation of 
          neutralinos into two photons and Z-photon
       */ 
@@ -59,7 +59,7 @@
          DM velocity distribution,
          A-dependence of Fermi-dencity
       */     
-#define CDM_NUCLEON 
+//#define CDM_NUCLEON 
       /* Calculate amplitudes and cross-sections for 
          CDM-mucleon collisions 
       */  
@@ -68,10 +68,10 @@
         Compare analytical formula for DD against micrOMEGAS calculation.
         As well as compare tree level and box improved approaches.
        */      
-#define CDM_NUCLEUS
+//#define CDM_NUCLEUS
      // Calculate  exclusion rate for direct detection experiments Xenon1T and DarkSide50
 
-#define NEUTRINO 
+//#define NEUTRINO 
  /*  Neutrino signal of DM annihilation in Sun and Earth */
  
 //#define DECAYS 

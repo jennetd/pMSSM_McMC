@@ -102,8 +102,8 @@ tree_branches["siso_chi2_ndf"]={"container":np.zeros(1,dtype=int),"dtype":"I"}
 #tree_branches["hs_chi2"]={"container":np.zeros(1,dtype=float),"dtype":"D"}
 #tree_branches["hs_chi2_ndf"]={"container":np.zeros(1,dtype=int),"dtype":"I"}
 
-#tree_branches["gm2calc_stdout"]={"container":TString(),"dtype":"TString"}
-#tree_branches["Delta_a_mu_x1E11"]={"container":np.zeros(1,dtype = float),"dtype":"D"}
+tree_branches["gm2calc_stdout"]={"container":TString(),"dtype":"TString"}
+tree_branches["Delta_a_mu_x1E11"]={"container":np.zeros(1,dtype = float),"dtype":"D"}
 
 #tree_branches["omegah2"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
 #tree_branches["micromegas_stdout"]={"container":TString(),"dtype":"TString"}

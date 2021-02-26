@@ -26,16 +26,8 @@ if(LEP_CHISQ)
   target_link_libraries(HBwithLEPlikelihood PRIVATE HB)
 endif(LEP_CHISQ)
 
-if(LEP_CHISQ)
-  add_executable(HBwithLEPlikelihood_SLHA HBwithLEPlikelihood_SLHA.F90)
-  target_link_libraries(HBwithLEPlikelihood_SLHA PRIVATE HB)
-endif(LEP_CHISQ)
-
 add_executable(HBwithLHClikelihood HBwithLHClikelihood.F90)
 target_link_libraries(HBwithLHClikelihood PRIVATE HB)
-
-add_executable(HBwithLHClikelihood_SLHA HBwithLHClikelihood_SLHA.F90)
-target_link_libraries(HBwithLHClikelihood_SLHA PRIVATE HB)
 
 add_executable(HBwithSLHA HBwithSLHA.F90)
 target_link_libraries(HBwithSLHA PRIVATE HB)

@@ -15,6 +15,7 @@ from datetime import datetime
 # set up the parameter ranges 
 # positive definite only: signs dealt with below
 parameter_ranges ={}
+
 parameter_ranges["tb"] = (1,60)
 parameter_ranges["Mh3"] = (100,25000)
 parameter_ranges["mu"] = (80,25000) # can be <0
@@ -40,7 +41,7 @@ for parameter in ["mu","M1","M2","Al","Ab","At"]:
 
 # width coefficient of the gaussian for the mcmc step. 
 # This coefficient is multiplied by the parameter range to give the width of the gaussian.
-width_coefficient = .01
+width_coefficient = .1
 base = np.e
 
 # paths and executables
@@ -133,16 +134,25 @@ def generate_point(input_point = {}):
         for parameter,parameterrange in parameter_ranges.items():
             in_range = False
 
-            # constant width, log mean
-            width = log(width_coefficient*(parameterrange[1]-parameterrange[0]),base)
-            mean = log(abs(input_point[parameter]),base)
+            if True: # constant width, log mean
+                width = width_coefficient*log(parameterrange[1]-parameterrange[0],base)
+                #log(width_coefficient*(parameterrange[1]-parameterrange[0]),base)
+                mean = log(abs(input_point[parameter]),base)
             
-            while not in_range:
-                parametervalue = pow(base,random.gauss(mean,width))                
-                in_range = parametervalue > parameterrange[0] and parametervalue < parameterrange[1]
+                while not in_range:
+                    parametervalue = pow(base,random.gauss(mean,width))                
+                    in_range = parametervalue > parameterrange[0] and parametervalue < parameterrange[1]
                 
+            if False: # constant width, lin mean
+                width = width_coefficient*(parameterrange[1]-parameterrange[0])
+                mean = input_point[parameter]
+                
+                while not in_range:
+                    parametervalue = random.gauss(mean,width)
+                    in_range = parametervalue > parameterrange[0] and parametervalue < parameterrange[1]
+
             output_point[parameter] = np.sign(input_point[parameter])*parametervalue
-            
+                
         output_point["mtop"]= random.gauss(input_point["mtop"],0.9*width_coefficient)
         output_point["mbottom"]= random.gauss(input_point["mbottom"],((0.18+0.04)/2)*width_coefficient)
         output_point["alpha_s"] = random.gauss(input_point["alpha_s"],0.0011*width_coefficient)
@@ -156,6 +166,7 @@ def run_spheno(inpath,devnull):
     cmd = " ".join([spnexe,inpath,devnull])
     os.system(cmd)
     error = open("Messages.out","r").read()
+#    print(error)
     return len(error) == 0
 
 # FeynHiggs

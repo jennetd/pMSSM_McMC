@@ -10,6 +10,8 @@ import utils
 import likelihood
 import subprocess
 
+from datetime import datetime
+
 # set up the parameter ranges 
 # positive definite only: signs dealt with below
 parameter_ranges ={}
@@ -167,7 +169,11 @@ def run_feynhiggs(devnull):
     fhin = "SPheno.spc.fh-001"#again, writing a lot of files to disk
     spnin = "SPheno.spc"
     cmd = " ".join([fhexe,spnin,devnull])
-    os.system(cmd)# run FeynHiggs
+
+    t1 = datetime.now()
+    os.system(cmd)# run FeynHiggs                                           
+    print("FeynHiggs",str(datetime.now()-t1))
+
     if not os.path.exists(fhin):#check to see whether FeynHiggs produced an output
         print "could not find Feynhiggs output, skipping point"
         return False
@@ -309,8 +315,12 @@ def read_superiso_out(search_str,siso_out):
 
 # superiso
 def run_superiso(slhapath):
+
+    t1 = datetime.now()
     siso_call = subprocess.Popen([sisoexe,str(slhapath)], stdout=subprocess.PIPE)
     siso_out = siso_call.stdout.read()
+    print("superiso",str(datetime.now()-t1))
+
     if len(siso_out)<10:
         print "something went wrong with siso call!"
 #        print siso_out
@@ -335,8 +345,12 @@ def run_superiso(slhapath):
     return returndict
 
 def run_superiso_chi2(slhapath):
+
+    t1 = datetime.now()
     siso_chi2_call = subprocess.Popen([sisochi2exe,str(slhapath)], stdout=subprocess.PIPE)
     siso_chi2_out = siso_chi2_call.stdout.read()
+    print("superiso chi2",str(datetime.now()-t1))
+
     if len(siso_chi2_out)<10:
         print "something went wrong with siso chi2 call!"
         print siso_chi2_out
@@ -353,8 +367,11 @@ def run_superiso_chi2(slhapath):
 
 # HiggsSignals
 def run_higgssignals(slhapath):
+
+    t1 = datetime.now()
     hs_call = subprocess.Popen(hsexe+" latestresults 1 SLHA 3 1 "+slhapath, stdout=subprocess.PIPE,shell=True)
     hs_out = hs_call.stdout.read()
+    print("HiggsSignals",str(datetime.now()-t1))
 
     returndict = {"hs_stdout":{"value":hs_out,"special_case":""}}
     return returndict
@@ -362,18 +379,22 @@ def run_higgssignals(slhapath):
 # HiggsBounds
 def run_higgsbounds(slhapath):
 
+    t1 = datetime.now()
     hb_call = subprocess.Popen(hbexe+" LandH SLHA 3 1 "+slhapath, stdout=subprocess.PIPE,shell=True)
     hb_out = hb_call.stdout.read()
-    
+    print("HiggsBounds",str(datetime.now()-t1))
+
     returndict = {"hb_stdout":{"value":hb_out,"special_case":""}}
     return returndict
 
 def run_higgsbounds_chi2(slhapath):
 
     os.system("ln -s "+slhapath+" "+slhapath+".1")
+    t1 = datetime.now()
     hb_call = subprocess.Popen(hbchi2exe+" 1 "+slhapath, stdout=subprocess.PIPE,shell=True)
     hb_out = hb_call.stdout.read()
-    
+    print("HiggsBounds chi2",str(datetime.now()-t1))
+
     returndict = {"hb_chi2_stdout":{"value":hb_out,"special_case":""}}
 
     with open("Mh125_HBwithLHClikelihood.dat", "r") as hb_outfile:
@@ -396,11 +417,13 @@ def run_higgsbounds_chi2(slhapath):
 # MicroMegas
 def run_micromegas(slhapath):
 
+    t1 = datetime.now()
     print "calling micromegas"
     micromegas_call = subprocess.Popen(mmgsexe+" "+str(slhapath), stdout=subprocess.PIPE,shell=True)
     print "processing micromegas output"
     micromegas_out = micromegas_call.stdout.read()
     print "I got the output! yay! This is it:"
+    print("Micromegas",str(datetime.now()-t1))
 
     print micromegas_out
 
@@ -422,6 +445,7 @@ def run_micromegas(slhapath):
 # GM2Calc                                                                                  
 def run_gm2calc(slhapath):
 
+    t1 = datetime.now()
     with open(slhapath, "a+") as file_object:
         file_object.write("\n")
         file_object.write("Block GM2CalcConfig\n")
@@ -434,6 +458,7 @@ def run_gm2calc(slhapath):
 
     gm2_call = subprocess.Popen(gm2exe+" --slha-input-file="+str(slhapath), stdout=subprocess.PIPE,shell=True)
     gm2_out = gm2_call.stdout.read()
+    print("GM2Calc",str(datetime.now()-t1))
 
     returndict = {"gm2calc_stdout":{"value":gm2_out,"special_case":""}}
 
@@ -539,16 +564,20 @@ def run(arguments):
         while not finite_lh:
             utils.clean()
             spnerr = False
-            while not spnerr:#find a viable point
+            n_spnerr = 0
+            while not spnerr:#find a viable point                                                        
+                n_spnerr += 1
                 utils.clean()
-                candidate = generate_point()#generate a point from flat prior
-                spnin = utils.write_spheno_input(candidate)#write the input for spheno
-                spnerr = run_spheno(spnin,devnull) #run spheno, check if viable point
+                candidate = generate_point(lastaccepted)#generate a point from the last point                       
+                spnin = utils.write_spheno_input(candidate)#write the input for spheno                            
+                spnerr = run_spheno(spnin,devnull) #run spheno, check if viable point                             
 
-            if not run_feynhiggs(devnull):#run feynhiggs, replace higgs sector
+            print("SPheno errs:",n_spnerr)
+            if not run_feynhiggs(devnull):#run feynhiggs, replace higgs sector                                
                 continue
 
             gm2_obs = run_gm2calc(slhapath="SPheno.spc")
+
 
 #            hb_obs = run_higgsbounds(slhapath="SPheno.spc")
 #            hb_obs = run_higgsbounds_chi2(slhapath="SPheno.spc")
@@ -622,12 +651,15 @@ def run(arguments):
         while not finite_lh:
             utils.clean()
             spnerr = False
+            n_spnerr = 0
             while not spnerr:#find a viable point
+                n_spnerr += 1
                 utils.clean()
                 candidate = generate_point(lastaccepted)#generate a point from the last point
                 spnin = utils.write_spheno_input(candidate)#write the input for spheno
                 spnerr = run_spheno(spnin,devnull) #run spheno, check if viable point
 
+            print("SPheno errs:",n_spnerr)
             if not run_feynhiggs(devnull):#run feynhiggs, replace higgs sector
                 continue
 

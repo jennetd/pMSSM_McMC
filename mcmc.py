@@ -493,6 +493,7 @@ def run(arguments):
     devnull = '> /dev/null'
 
     lastaccepted = {}
+    notaccepted = {}
     #select mode, use argparse for this
     move = 1
     #run the thing
@@ -520,9 +521,6 @@ def run(arguments):
                 continue
 
             gm2_obs = run_gm2calc(slhapath="SPheno.spc")
-
-
-#            hb_obs = run_higgsbounds(slhapath="SPheno.spc")
             hb_obs = run_higgsbounds_chi2(slhapath="SPheno.spc")
             hs_obs = run_higgssignals(slhapath="SPheno.spc")
 
@@ -635,7 +633,8 @@ def run(arguments):
 
             _l = likelihood.make_decision(observables,lastaccepted["likelihood"])#get likelihood
             finite_lh = _l != 0
-        if _l<0:
+
+        if _l<0: # point is not accepted
             move +=1
             if iter_ix == start+tend:
                 print "Made all "+str(tend)+" iterations, moving "+outname+" to storage"
@@ -643,7 +642,18 @@ def run(arguments):
                 outtree.Write()
                 outroot.Close()
                 os.system(" ".join(["mv",outname,outdir]))
-            continue #point was not accepted
+            
+            notaccepted["likelihood"] = _l
+            notaccepted["iteration_index"] = iter_ix
+            notaccepted["accepted_index"] = -1
+            notaccepted["chain_index"] = chainix
+
+            for obs in observables.keys():
+                notaccepted[obs] = observables[obs]["value"]
+                
+            notaccepted = prepare_fill(notaccepted,outtree)
+            outtree.Fill() # save it even though not accepted
+            continue
 
         lastaccepted["likelihood"]=_l
         lastaccepted["iteration_index"] = iter_ix

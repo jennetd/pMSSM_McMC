@@ -4,7 +4,7 @@ npoints=$1
 echo "Sourcing setup scripts"
 source /root-6.12.06-build/bin/thisroot.sh
 
-tar -zxvf pMSSM_McMC_v1.1.tar.gz
+tar -zxvf pMSSM_McMC-master.tar.gz
 cd pMSSM_McMC
 
 ./install-hb.sh 

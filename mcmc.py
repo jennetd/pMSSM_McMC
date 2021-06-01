@@ -32,16 +32,28 @@ for parameter in ["Ab","Al"]: # can be <0
     parameter_ranges[parameter] = (1,7000)
 parameter_ranges["At"] = (1,7000) # can be <0
 
+# Malte's ranges
+#for parameter in ["mu","M1","M2"]:
+#    parameter_ranges[parameter] = (0,4000)
+#for parameter in ["M3","Mq1","Mq3","Mu1","Mu3","Md1","Md3"]:
+#    parameter_ranges[parameter] = (0,10000)
+#for parameter in ["Ml1","Mr1","Ml3","Mr3","Mh3"]:
+#    parameter_ranges[parameter] = (0,4000)
+#for parameter in ["At","Ab","Al"]:
+#    parameter_ranges[parameter] = (0,7000)
+#parameter_ranges["tb"] = (2,60)
+
 # signs
 parameter_signs = {}
 for parameter in ["tb","Mh3","M3","Ml1","Mr1","Ml3","Mr3","Mq1","Mu1","Md1","Mq3","Mu3","Md3"]:
     parameter_signs[parameter] = 1
 for parameter in ["mu","M1","M2","Al","Ab","At"]:
     parameter_signs[parameter] = np.random.randint(2, size=1)[0]*2 - 1
-
+#    parameter_signs[parameter] = 1
+    
 # width coefficient of the gaussian for the mcmc step. 
 # This coefficient is multiplied by the parameter range to give the width of the gaussian.
-width_coefficient = .1
+width_coefficient = .01
 base = np.e
 
 # paths and executables
@@ -54,6 +66,7 @@ sisoexe = packagedir+"superiso_v4.0/slha.x"
 sisochi2exe = packagedir+"superiso_v4.0/slha_chi2_reduced.x"#use only branching ratios in superiso chi2. takes approximately 8s/call
 hbexe = "./packages/higgsbounds/build/HiggsBounds"
 hbchi2exe = "./packages/higgsbounds/build/example_programs/HBwithLHClikelihood_SLHA"
+hbslhaexe="./packages/higgsbounds/build/example_programs/HBSLHAinputblocksfromFH"
 hsexe = "./packages/higgssignals/build/HiggsSignals"
 mmgsexe = packagedir+"micromegas_5.2.4/MSSM/main"
 gm2exe = packagedir+"GM2Calc-1.7.3/build/bin/gm2calc.x"
@@ -73,6 +86,8 @@ tree_branches["mhiggs"] = {"container":np.zeros(1,dtype = float),"dtype":"D"}
 tree_branches["mW"] = {"container":np.zeros(1,dtype = float),"dtype":"D"}
 for param in parameter_ranges.keys():
     tree_branches[param] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
+for param in ["mu","M1","M2","Al","Ab","At"]:
+    tree_branches[param+"_sign"] = {"container":np.zeros(1,dtype=int),"dtype":"I"}
 
 tree_branches["superiso_chi2_stdout"]={"container":TString(),"dtype":"TString"}
 tree_branches["superiso_stdout"]={"container":TString(),"dtype":"TString"}
@@ -100,6 +115,8 @@ tree_branches["hb_chi2_stdout"]={"container":TString(),"dtype":"TString"}
 tree_branches["llh_CMS8"]={"container":np.zeros(1,dtype=float),"dtype":"D"}
 tree_branches["llh_CMS13"]={"container":np.zeros(1,dtype=float),"dtype":"D"}
 tree_branches["llh_ATLAS20"]={"container":np.zeros(1,dtype=float),"dtype":"D"}
+
+tree_branches["hb_slha_stdout"] = {"container":TString(),"dtype":"TString"}
 
 tree_branches["hs_stdout"]={"container":TString(),"dtype":"TString"}
 tree_branches["hs_chi2"]={"container":np.zeros(1,dtype=float),"dtype":"D"}
@@ -152,7 +169,10 @@ def generate_point(input_point = {}):
                     in_range = parametervalue > parameterrange[0] and parametervalue < parameterrange[1]
 
             output_point[parameter] = np.sign(input_point[parameter])*parametervalue
-                
+            
+        for param in ["mu","M1","M2","Al","Ab","At"]:
+            output_point[param+"_sign"] = parameter_signs[param]
+
         output_point["mtop"]= random.gauss(input_point["mtop"],0.9*width_coefficient)
         output_point["mbottom"]= random.gauss(input_point["mbottom"],((0.18+0.04)/2)*width_coefficient)
         output_point["alpha_s"] = random.gauss(input_point["alpha_s"],0.0011*width_coefficient)
@@ -195,6 +215,11 @@ def run_feynhiggs(devnull):
 
     dspnin.blocks["DMASS"] = dfhin.blocks["DMASS"]
     dspnin.blocks["ALPHA"] = dfhin.blocks["ALPHA"]
+
+    # If the Higgs mass is too terrible
+#    if dspnin.blocks["MASS"][25] < 123.6 or dspnin.blocks["MASS"][25] > 126.6:
+#        print "awful Higgs mass, skipping point"
+#        return False
 
     particles_to_replace = [24,25,35,36,37]
     for particle in particles_to_replace:
@@ -315,11 +340,16 @@ def run_superiso_chi2(slhapath):
 def run_higgssignals(slhapath):
 
     t1 = datetime.now()
-    hs_call = subprocess.Popen(hsexe+" latestresults 1 SLHA 3 1 "+slhapath, stdout=subprocess.PIPE,shell=True)
+    hb_slha_call = subprocess.Popen(hbslhaexe + " " +slhapath, stdout=subprocess.PIPE, shell=True)
+    hb_slha_out = hb_slha_call.stdout.read()
+    os.system("cp "+slhapath+".fh "+slhapath)
+    
+    hs_call = subprocess.Popen(hsexe+" latestresults 1 SLHA 3 1 "+slhapath, stdout=subprocess.PIPE, shell=True)
     hs_out = hs_call.stdout.read()
     print("HiggsSignals",str(datetime.now()-t1))
 
-    returndict = {"hs_stdout":{"value":hs_out,"special_case":""}}
+    returndict = {"hb_slha_stdout":{"value":hb_slha_out,"special_case":""},
+                  "hs_stdout":{"value":hs_out,"special_case":""}}
     return returndict
     
 # HiggsBounds
@@ -328,6 +358,7 @@ def run_higgsbounds(slhapath):
     t1 = datetime.now()
     hb_call = subprocess.Popen(hbexe+" LandH SLHA 3 1 "+slhapath, stdout=subprocess.PIPE,shell=True)
     hb_out = hb_call.stdout.read()
+    print(hb_out)
     print("HiggsBounds",str(datetime.now()-t1))
 
     returndict = {"hb_stdout":{"value":hb_out,"special_case":""}}
@@ -335,7 +366,7 @@ def run_higgsbounds(slhapath):
 
 def run_higgsbounds_chi2(slhapath):
 
-    os.system("ln -s "+slhapath+" "+slhapath+".1")
+    os.system("cp "+slhapath+" "+slhapath+".1")
     t1 = datetime.now()
     hb_call = subprocess.Popen(hbchi2exe+" 1 "+slhapath, stdout=subprocess.PIPE,shell=True)
     hb_out = hb_call.stdout.read()
@@ -343,6 +374,8 @@ def run_higgsbounds_chi2(slhapath):
 
     returndict = {"hb_chi2_stdout":{"value":hb_out,"special_case":""}}
     
+    os.system("cp "+slhapath+".1 "+slhapath)
+
     with open("Mh125_HBwithLHClikelihood.dat", "r") as hb_outfile:
          content = hb_outfile.read().split()
 
@@ -356,7 +389,7 @@ def run_higgsbounds_chi2(slhapath):
         print "rejecting candidate point"
         return -1
 
-    print(returndict["llh_CMS8"]["value"],returndict["llh_CMS13"]["value"],returndict["llh_ATLAS20"]["value"])
+#    print(returndict["llh_CMS8"]["value"],returndict["llh_CMS13"]["value"],returndict["llh_ATLAS20"]["value"])
     
     return returndict
 
@@ -470,6 +503,9 @@ def prepare_fill(point,outtree):
         point_info["Md2"] = d.blocks["EXTPAR"][48]
         point_info["Md3"] = d.blocks["EXTPAR"][49]
 
+        for parameter in ["mu","M1","M2","Al","Ab","At"]:
+            point_info[parameter+"_sign"] = parameter_signs[parameter]
+
     with open("SPheno.spc","r") as spnin:
         slhacont = spnin.read()
         slhafile = slhacont
@@ -521,8 +557,9 @@ def run(arguments):
                 continue
 
             gm2_obs = run_gm2calc(slhapath="SPheno.spc")
-            hb_obs = run_higgsbounds_chi2(slhapath="SPheno.spc")
             hs_obs = run_higgssignals(slhapath="SPheno.spc")
+            hb_obs = run_higgsbounds(slhapath="Spheno.spc")
+            hb_obs = run_higgsbounds_chi2(slhapath="SPheno.spc")
 
 #            os.system("cp SPheno.spc mmgsin.slha")
 #            mmgs_obs = run_micromegas(slhapath="mmgsin.slha")#micromegas seems to consume the input file?!?!
@@ -559,6 +596,9 @@ def run(arguments):
 #        print(type(observables["Delta_a_mu_x1E11"]["value"]))
         lastaccepted = prepare_fill(lastaccepted,outtree)#add the rest of the point info, fill the tree branches
         outtree.Fill()
+        # save slha
+        outfile = args.output+"/pMSSM_MCMC_"+str(lastaccepted["accepted_index"])+".shla"
+        os.system("cp SPheno.spc "+outfile)        
 
     #mode 2: continue from previous point/root file?
     elif mode == "resume":
@@ -605,10 +645,9 @@ def run(arguments):
                 continue
 
             gm2_obs = run_gm2calc(slhapath="SPheno.spc")
-
-#            hb_obs = run_higgsbounds(slhapath="SPheno.spc")
-            hb_obs = run_higgsbounds_chi2(slhapath="SPheno.spc")
             hs_obs = run_higgssignals(slhapath="SPheno.spc")
+            hb_obs = run_higgsbounds(slhapath="SPheno.spc")
+            hb_obs = run_higgsbounds_chi2(slhapath="SPheno.spc")
 
 #            os.system("cp SPheno.spc mmgsin.slha")
 #            mmgs_obs = run_micromegas(slhapath="mmgsin.slha")
@@ -665,6 +704,10 @@ def run(arguments):
 
         lastaccepted = prepare_fill(lastaccepted,outtree)#add the rest of the point info, fill the tree branches
         outtree.Fill()
+        # save slha
+        outfile = args.output+"/pMSSM_MCMC_"+str(lastaccepted["accepted_index"])+".shla"
+        os.system("cp SPheno.spc "+outfile)
+
         if iter_ix == start+tend:
             print "Made all "+str(tend)+" iterations, moving "+outname+" to storage"
             outtree.BuildIndex("chain_index","iteration_index")

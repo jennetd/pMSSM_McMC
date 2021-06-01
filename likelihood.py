@@ -26,14 +26,14 @@ likelihood_contributions["mW"] = {"value":80.379,"uncertainty":0.012}
 
 # from SPheno
 # https://pdg.lbl.gov/2020/listings/rpp2020-list-B-plus-minus.pdf
-likelihood_contributions["BR_B_to_tau_nu"]={"value":1.09E-04,"uncertainty":0.24E-04}
+#likelihood_contributions["BR_B_to_tau_nu"]={"value":1.09E-04,"uncertainty":0.24E-04}
 
 #https://pdg.lbl.gov/2020/listings/rpp2020-list-D-star-2010-plus-minus.pdf
-likelihood_contributions["BR_Ds_to_tau_nu"]={"value":5.48E-02,"uncertainty":0.23E-02}
-likelihood_contributions["BR_Ds_to_mu_nu"]={"value":5.49E-03,"uncertainty":0.16E-03}
+#likelihood_contributions["BR_Ds_to_tau_nu"]={"value":5.48E-02,"uncertainty":0.23E-02}
+#likelihood_contributions["BR_Ds_to_mu_nu"]={"value":5.49E-03,"uncertainty":0.16E-03}
 
 #http://pdg.lbl.gov/2018/reviews/rpp2018-rev-standard-model.pdf 
-likelihood_contributions["drho"]={"value":3.9E-04,"uncertainty":1.9E-04}
+#likelihood_contributions["drho"]={"value":3.9E-04,"uncertainty":1.9E-04}
 
 # From superiso
 #https://hflav-eos.web.cern.ch/hflav-eos/rare/April2019/RADLL/OUTPUT/HTML/radll_table7.html
@@ -71,13 +71,13 @@ def get_likelihood(observables):
             elif type(likelihood_contributions[obs]["uncertainty"]) == list:#non-symmetric error, use two-sided gaussian
                 product_likelihood *= utils.gauss_pm(obsval["value"],likelihood_contributions[obs]["value"],sigma_m = likelihood_contributions[obs]["uncertainty"][0],sigma_p = likelihood_contributions[obs]["uncertainty"][1])
 
-                
     #handle special cases
     #superiso chi2
     chi2 = observables["siso_chi2"]["value"]
     ndf = observables["siso_chi2_ndf"]["value"]
     gamma = math.gamma(float(ndf)/2)
     coeff = pow(chi2,(float(ndf)/2)-1)/((pow(2,float(ndf)/2))*gamma)
+
     product_likelihood *= (coeff*math.exp(-chi2/2))
 
     # higgs signals chi2
@@ -85,13 +85,14 @@ def get_likelihood(observables):
     ndf   = observables["hs_chi2_ndf"]["value"]
     gamma = math.gamma(float(ndf)/2)
     coeff = pow(chi2,(float(ndf)/2)-1)/((pow(2,float(ndf)/2))*gamma)
+
     product_likelihood *= (coeff*math.exp(-chi2/2))
 
     # higgs bounds chi2
     product_likelihood *= np.exp(observables["llh_CMS8"]["value"])
     product_likelihood *= np.exp(observables["llh_CMS13"]["value"])
     product_likelihood *= np.exp(observables["llh_ATLAS20"]["value"])
-    
+
     return product_likelihood
 
 

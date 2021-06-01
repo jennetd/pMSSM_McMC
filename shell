@@ -1,0 +1,1 @@
+singularity exec -B /afs /cvmfs/unpacked.cern.ch/registry.hub.docker.com/jdickins/pmssm-env:latest /bin/bash

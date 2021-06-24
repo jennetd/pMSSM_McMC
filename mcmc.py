@@ -53,14 +53,14 @@ for parameter in ["mu","M1","M2","Al","Ab","At"]:
     
 # width coefficient of the gaussian for the mcmc step. 
 # This coefficient is multiplied by the parameter range to give the width of the gaussian.
-width_coefficient = .01
+width_coefficient = .05
 base = np.e
 
 # paths and executables
 homedir = "/pMSSM_McMC"
 packagedir = homedir+"/packages/"
 spnexe = packagedir+"SPheno-4.0.4/bin/SPheno"
-fhexe = packagedir+"FeynHiggs-2.16.1/x86_64-Linux/bin/FeynHiggs"
+fhexe = "./packages/FeynHiggs-2.18.0/x86_64-Linux/bin/FeynHiggs"
 sisoexe = packagedir+"superiso_v4.0/slha.x"
 #sisochi2exe = packagedir+"superiso_v4.0/slha_chi2.x" #use all of the non-controversial low-energy results in superiso chi2 calculation. takes approximately 20s/call
 sisochi2exe = packagedir+"superiso_v4.0/slha_chi2_reduced.x"#use only branching ratios in superiso chi2. takes approximately 8s/call
@@ -558,7 +558,7 @@ def run(arguments):
 
             gm2_obs = run_gm2calc(slhapath="SPheno.spc")
             hs_obs = run_higgssignals(slhapath="SPheno.spc")
-            hb_obs = run_higgsbounds(slhapath="Spheno.spc")
+            hb_obs = run_higgsbounds(slhapath="SPheno.spc")
             hb_obs = run_higgsbounds_chi2(slhapath="SPheno.spc")
 
 #            os.system("cp SPheno.spc mmgsin.slha")

@@ -89,9 +89,9 @@ def get_likelihood(observables):
     product_likelihood *= (coeff*math.exp(-chi2/2))
 
     # higgs bounds chi2
-    product_likelihood *= np.exp(observables["llh_CMS8"]["value"])
-    product_likelihood *= np.exp(observables["llh_CMS13"]["value"])
-    product_likelihood *= np.exp(observables["llh_ATLAS20"]["value"])
+    product_likelihood *= np.exp(-0.5*observables["llh_CMS8"]["value"])
+    product_likelihood *= np.exp-0.5*(observables["llh_CMS13"]["value"])
+    product_likelihood *= np.exp(-0.5*observables["llh_ATLAS20"]["value"])
 
     return product_likelihood
 

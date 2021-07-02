@@ -24,7 +24,7 @@ cd pMSSM_McMC
 
 External (public) packages are contained in the packages/ directory:
  * SPheno 4.0.4 - can use pre-compiled version in docker container
- * FeynHiggs 2.16.1 - can use pre-compiled version in docker container
+ * FeynHiggs 2.18.0 - can use pre-compiled version in docker container (updated 06/25/21)
  * superiso 4.0 - can use pre-compiled version in docker container
  * GM2Calc 1.7.3 - can use pre-compiled version in docker container
  * HiggsBounds 5.9.1 - need to install locally (because the contents must be editable by scan job)

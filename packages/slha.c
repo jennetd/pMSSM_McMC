@@ -73,8 +73,8 @@ int main(int argc,char** argv)
 		//		printf("P8'(B->K* mu mu)_high\t\t%.3e\n",obs[21]);
 		//		printf("AI(B->K* mu mu)_high\t\t%.3e\n\n",AI_BKstarmumu_highq2_calculator(name));
 
-		printf("BR(B->Xs e e)_low\t\t%.3e\n",BRBXsee_lowq2_calculator(name));
-                printf("BR(B->Xs e e)_high\t\t%.3e\n",BRBXsee_highq2_calculator(name));
+		//		printf("BR(B->Xs e e)_low\t\t%.3e\n",BRBXsee_lowq2_calculator(name));
+		//                printf("BR(B->Xs e e)_high\t\t%.3e\n",BRBXsee_highq2_calculator(name));
 
 		printf("BR(B->Xs mu mu)_low\t\t%.3e\n",BRBXsmumu_lowq2_calculator(name));
 		printf("BR(B->Xs mu mu)_high\t\t%.3e\n",BRBXsmumu_highq2_calculator(name));

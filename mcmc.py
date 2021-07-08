@@ -11,6 +11,7 @@ import likelihood
 import subprocess
 from datetime import datetime
 import pyslha
+import pickle
 
 # set up the parameter ranges 
 # positive definite only: signs dealt with below
@@ -73,7 +74,7 @@ gm2exe = packagedir+"GM2Calc-1.7.3/build/bin/gm2calc.x"
 
 #containers for the tree branches. Numpy arrays are used as an interface between python types and the root branches
 tree_branches = {}
-tree_branches["slha_file"]={"container":TString(),"dtype":"TString"}
+#tree_branches["slha_file"]={"container":TString(),"dtype":"TString"}
 tree_branches["likelihood"]= {"container":np.zeros(1,dtype = float),"dtype":"D"}
 tree_branches["iteration_index"] = {"container":np.zeros(1,dtype = int),"dtype":"I"}
 tree_branches["accepted_index"] = {"container":np.zeros(1,dtype = int),"dtype":"I"}
@@ -95,8 +96,10 @@ tree_branches["Delta0_B_to_K0star_gamma"] = {"container":np.zeros(1,dtype=float)
 tree_branches["BR_B0_K0star_gamma"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
 tree_branches["BR_Bs_to_mu_mu"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
 tree_branches["BR_Bd_to_mu_mu"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
-#tree_branches["BR_b_to_s_mu_mu"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
-#tree_branches["BR_b_to_s_e_e"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
+tree_branches["BRBXsmumu_lowq2"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
+tree_branches["BRBXsmumu_highq2"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
+tree_branches["BRBXsee_lowq2"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
+tree_branches["BRBXsee_highq2"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
 tree_branches["BR_b_to_s_gamma"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
 tree_branches["siso_chi2"]={"container":np.zeros(1,dtype=float),"dtype":"D"}
 tree_branches["siso_chi2_ndf"]={"container":np.zeros(1,dtype=int),"dtype":"I"}
@@ -216,10 +219,10 @@ def run_feynhiggs(devnull):
     dspnin.blocks["DMASS"] = dfhin.blocks["DMASS"]
     dspnin.blocks["ALPHA"] = dfhin.blocks["ALPHA"]
 
-    # If the Higgs mass is too terrible
-#    if dspnin.blocks["MASS"][25] < 123.6 or dspnin.blocks["MASS"][25] > 126.6:
-#        print "awful Higgs mass, skipping point"
-#        return False
+    # If the uncertainty on the Higgs mass is too large
+    if dspnin.blocks["DMASS"][25] > 5:
+        print "large mh uncertainty, skipping point"
+        return False
 
     particles_to_replace = [24,25,35,36,37]
     for particle in particles_to_replace:
@@ -299,11 +302,17 @@ def run_superiso(slhapath):
 
     # get the individual observables from stdout
     try:
+        print(siso_out)
         returndict["Delta0_B_to_K0star_gamma"] = {"value":read_superiso_out("delta0(B->K* gamma)",siso_out)}
         returndict["BR_B0_K0star_gamma"] = {"value":read_superiso_out("BR(B0->K* gamma)",siso_out)}
         returndict["BR_Bs_to_mu_mu"] = {"value":read_superiso_out("BR(Bs->mu mu)",siso_out)}
         returndict["BR_Bd_to_mu_mu"] = {"value":read_superiso_out("BR(Bd->mu mu)",siso_out)}
-#        returndict["BR_b_to_s_mu_mu"] = {"value":read_superiso_out()}
+
+#tree_branches["BRBXsmumu_lowq2"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
+#tree_branches["BRBXsmumu_highq2"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
+#tree_branches["BRBXsee_lowq2"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
+#tree_branches["BRBXsee_highq2"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
+
 #        returndict["BR_b_to_s_e_e"] = {"value":read_superiso_out()}
         returndict["BR_b_to_s_gamma"] = {"value":read_superiso_out("BR(b->s gamma)",siso_out)}
 
@@ -506,11 +515,11 @@ def prepare_fill(point,outtree):
         for parameter in ["mu","M1","M2","Al","Ab","At"]:
             point_info[parameter+"_sign"] = parameter_signs[parameter]
 
-    with open("SPheno.spc","r") as spnin:
-        slhacont = spnin.read()
-        slhafile = slhacont
-    slha_file = TString(slhafile)
-    outtree.SetBranchAddress("slha_file",slha_file)
+#    with open("SPheno.spc","r") as spnin:
+#        slhacont = spnin.read()
+#        slhafile = slhacont
+#    slha_file = TString(slhafile)
+#    outtree.SetBranchAddress("slha_file",slha_file)
 
     for key in tree_branches.keys():#exclude strings
         if tree_branches[key]["dtype"]=="TString":continue
@@ -596,9 +605,18 @@ def run(arguments):
 #        print(type(observables["Delta_a_mu_x1E11"]["value"]))
         lastaccepted = prepare_fill(lastaccepted,outtree)#add the rest of the point info, fill the tree branches
         outtree.Fill()
+
+        # pickle slha
+        fullslha = pyslha.read("SPheno.spc")
+        picklename = args.output+"/pMSSM_MCMC_"+str(lastaccepted["accepted_index"])+".pkl"
+        outfile = open(picklename, 'wb')
+        pickle.dump(fullslha, outfile, protocol=-1)
+        outfile.close()
+
         # save slha
-        outfile = args.output+"/pMSSM_MCMC_"+str(lastaccepted["accepted_index"])+".shla"
-        os.system("cp SPheno.spc "+outfile)        
+        # too much space
+#        outfile = args.output+"/pMSSM_MCMC_"+str(lastaccepted["accepted_index"])+".slha"
+#        os.system("cp SPheno.spc "+outfile)        
 
     #mode 2: continue from previous point/root file?
     elif mode == "resume":
@@ -704,9 +722,18 @@ def run(arguments):
 
         lastaccepted = prepare_fill(lastaccepted,outtree)#add the rest of the point info, fill the tree branches
         outtree.Fill()
+
+        # pickle slha                                                                                                          
+        fullslha = pyslha.read("SPheno.spc")
+        picklename = args.output+"/pMSSM_MCMC_"+str(lastaccepted["accepted_index"])+".pkl"
+        outfile = open(picklename, 'wb')
+        pickle.dump(fullslha, outfile, protocol=-1)
+        outfile.close()
+
         # save slha
-        outfile = args.output+"/pMSSM_MCMC_"+str(lastaccepted["accepted_index"])+".shla"
-        os.system("cp SPheno.spc "+outfile)
+        # too much space
+#        outfile = args.output+"/pMSSM_MCMC_"+str(lastaccepted["accepted_index"])+".shla"
+#        os.system("cp SPheno.spc "+outfile)
 
         if iter_ix == start+tend:
             print "Made all "+str(tend)+" iterations, moving "+outname+" to storage"

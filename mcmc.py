@@ -80,6 +80,7 @@ tree_branches["iteration_index"] = {"container":np.zeros(1,dtype = int),"dtype":
 tree_branches["accepted_index"] = {"container":np.zeros(1,dtype = int),"dtype":"I"}
 tree_branches["chain_index"] = {"container":np.zeros(1,dtype = int),"dtype":"I"}
 
+tree_branches["Delta_rho"] = {"container":np.zeros(1,dtype = float),"dtype":"D"}
 tree_branches["mtop"] = {"container":np.zeros(1,dtype = float),"dtype":"D"}
 tree_branches["mbottom"] = {"container":np.zeros(1,dtype = float),"dtype":"D"}
 tree_branches["alpha_s"] = {"container":np.zeros(1,dtype = float),"dtype":"D"}
@@ -96,11 +97,14 @@ tree_branches["Delta0_B_to_K0star_gamma"] = {"container":np.zeros(1,dtype=float)
 tree_branches["BR_B0_K0star_gamma"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
 tree_branches["BR_Bs_to_mu_mu"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
 tree_branches["BR_Bd_to_mu_mu"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
-tree_branches["BRBXsmumu_lowq2"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
-tree_branches["BRBXsmumu_highq2"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
-tree_branches["BRBXsee_lowq2"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
-tree_branches["BRBXsee_highq2"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
+tree_branches["BR_B_to_Xs_mu_mu_lowq2"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
+tree_branches["BR_B_to_Xs_mu_mu_highq2"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
+#tree_branches["BR_B_to_Xs_e_e_lowq2"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
+#tree_branches["BR_B_to_Xs_e_e_highq2"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
 tree_branches["BR_b_to_s_gamma"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
+tree_branches["BR_B_to_tau_nu"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
+tree_branches["BR_Ds_to_tau_nu"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
+tree_branches["BR_Ds_to_mu_nu"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
 tree_branches["siso_chi2"]={"container":np.zeros(1,dtype=float),"dtype":"D"}
 tree_branches["siso_chi2_ndf"]={"container":np.zeros(1,dtype=int),"dtype":"I"}
 
@@ -254,6 +258,11 @@ def get_observables(slhapath):
     else:
         print("Error: no block SMINPUTS in SLHA file")
 
+    if "PRECOBS" in d.blocks:
+        returndict["Delta_rho"] = {"value":float(d.blocks["PRECOBS"][2])}
+    else:
+        print("Error: no block PRECOBS in SLHA file")
+
     if "HIGGSSIGNALSRESULTS" in d.blocks:
         try:
             returndict["hs_chi2"] = {"value":float(d.blocks["HIGGSSIGNALSRESULTS"][17]),"special_case":""}
@@ -297,24 +306,26 @@ def run_superiso(slhapath):
 
     if len(siso_out)<10:
         print "something went wrong with siso call!"
-#        print siso_out
+        print siso_out
     returndict = {"superiso_stdout":{"value":siso_out,"special_case":""}}
 
     # get the individual observables from stdout
     try:
-        print(siso_out)
+        # in chi2
         returndict["Delta0_B_to_K0star_gamma"] = {"value":read_superiso_out("delta0(B->K* gamma)",siso_out)}
         returndict["BR_B0_K0star_gamma"] = {"value":read_superiso_out("BR(B0->K* gamma)",siso_out)}
         returndict["BR_Bs_to_mu_mu"] = {"value":read_superiso_out("BR(Bs->mu mu)",siso_out)}
         returndict["BR_Bd_to_mu_mu"] = {"value":read_superiso_out("BR(Bd->mu mu)",siso_out)}
 
-#tree_branches["BRBXsmumu_lowq2"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
-#tree_branches["BRBXsmumu_highq2"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
-#tree_branches["BRBXsee_lowq2"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
-#tree_branches["BRBXsee_highq2"] = {"container":np.zeros(1,dtype=float),"dtype":"D"}
-
-#        returndict["BR_b_to_s_e_e"] = {"value":read_superiso_out()}
+        returndict["BR_B_to_Xs_mu_mu_lowq2"] = {"value":read_superiso_out("BR(B->Xs mu mu)_low",siso_out)}
+        returndict["BR_B_to_Xs_mu_mu_highq2"] = {"value":read_superiso_out("BR(B->Xs mu mu)_high",siso_out)}
+        # BR_B_to_Xs_e_e_* are not calculated for output tree, but are included in chi2
         returndict["BR_b_to_s_gamma"] = {"value":read_superiso_out("BR(b->s gamma)",siso_out)}
+
+        # other
+        returndict["BR_B_to_tau_nu"] = {"value":read_superiso_out("BR(B->tau nu)",siso_out)}
+        returndict["BR_Ds_to_tau_nu"] = {"value":read_superiso_out("BR(Ds->tau nu)",siso_out)}
+        returndict["BR_Ds_to_mu_nu"] = {"value":read_superiso_out("BR(Ds->mu nu)",siso_out)}
 
     except:
         print "something went wrong with siso call, printing output"
@@ -342,7 +353,7 @@ def run_superiso_chi2(slhapath):
     ndf = siso_chi2_out[siso_chi2_out.find("n_obs"):]
     ndf = int(ndf[ndf.find("=")+1:ndf.find("\n")].strip())
     returndict["siso_chi2_ndf"]={"value":ndf,"special_case":""}
-#    print siso_chi2_out
+
     return returndict
 
 # HiggsSignals
@@ -367,7 +378,7 @@ def run_higgsbounds(slhapath):
     t1 = datetime.now()
     hb_call = subprocess.Popen(hbexe+" LandH SLHA 3 1 "+slhapath, stdout=subprocess.PIPE,shell=True)
     hb_out = hb_call.stdout.read()
-    print(hb_out)
+
     print("HiggsBounds",str(datetime.now()-t1))
 
     returndict = {"hb_stdout":{"value":hb_out,"special_case":""}}

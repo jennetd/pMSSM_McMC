@@ -5,7 +5,7 @@ import math
 
 likelihood_contributions ={}
 
-#https://pdg.lbl.gov/2019/tables/rpp2019-sum-quarks.pdf                                                        
+#https://pdg.lbl.gov/2019/tables/rpp2019-sum-quarks.pdf                                                   
 likelihood_contributions["mtop"] = {"value":173.1,"uncertainty":0.9}
 likelihood_contributions["mbottom"] = {"value":4.18,"uncertainty":[0.02,0.03]}
 likelihood_contributions["alpha_s"] = {"value":0.1181,"uncertainty":0.0011}
@@ -25,17 +25,18 @@ likelihood_contributions["mW"] = {"value":80.379,"uncertainty":0.012}
 #likelihood_contributions["Delta_a_mu_x1E11"]={"value":261,"uncertainty":63.}
 
 # from SPheno
-# https://pdg.lbl.gov/2020/listings/rpp2020-list-B-plus-minus.pdf
-#likelihood_contributions["BR_B_to_tau_nu"]={"value":1.09E-04,"uncertainty":0.24E-04}
-
-#https://pdg.lbl.gov/2020/listings/rpp2020-list-D-star-2010-plus-minus.pdf
-#likelihood_contributions["BR_Ds_to_tau_nu"]={"value":5.48E-02,"uncertainty":0.23E-02}
-#likelihood_contributions["BR_Ds_to_mu_nu"]={"value":5.49E-03,"uncertainty":0.16E-03}
-
 #http://pdg.lbl.gov/2018/reviews/rpp2018-rev-standard-model.pdf 
-#likelihood_contributions["drho"]={"value":3.9E-04,"uncertainty":1.9E-04}
+likelihood_contributions["Delta_rho"]={"value":3.9E-04,"uncertainty":1.9E-04}
 
 # From superiso
+# not in superiso chi2
+# https://pdg.lbl.gov/2020/listings/rpp2020-list-B-plus-minus.pdf                                        
+likelihood_contributions["BR_B_to_tau_nu"]={"value":1.09E-04,"uncertainty":0.24E-04}                       
+#https://pdg.lbl.gov/2020/listings/rpp2020-list-D-star-2010-plus-minus.pdf                                 
+likelihood_contributions["BR_Ds_to_tau_nu"]={"value":5.48E-02,"uncertainty":0.23E-02}                        
+likelihood_contributions["BR_Ds_to_mu_nu"]={"value":5.49E-03,"uncertainty":0.16E-03}  
+
+# in superiso chi2
 #https://hflav-eos.web.cern.ch/hflav-eos/rare/April2019/RADLL/OUTPUT/HTML/radll_table7.html
 #likelihood_contributions["Delta0_B_to_K0star_gamma"] = {"value":0.063,"uncertainty":0.017}
 #https://pdg.lbl.gov/2020/listings/rpp2020-list-B-zero.pdf
